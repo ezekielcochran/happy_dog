@@ -1,0 +1,105 @@
+<!-- 
+    Filename: dog.html
+    Author: Ezekiel Cochran
+    Date: Sep 30, 2023
+    Class: Computer Graphics
+    Assignment: Enhanced Render
+    Description: Main html file used for rendering dog
+-->
+
+<!DOCTYPE html>
+<html>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute  vec4 vPosition;
+varying vec4 vPosition2;
+attribute  vec4 vColor;
+varying vec4 fColor;
+
+uniform mat4 rotationMatrix;
+varying mat4 wagMatrix;
+uniform float bigWagAngle; // represents the angle of the whole tail, not each point
+
+void main()
+{
+    // vPosition is what we get from the .js, and the homogenous coordinate gives us information
+    // about whether the point is in the tail, and how far up the tail it is
+    // vPosition2 is what we actually render, and what has the homogenous coordinate replaced back to 1.0
+    vPosition2 = vec4(vPosition[0], vPosition[1], vPosition[2], 1.0);
+    if (vPosition[3] == 0.0) { // point is in the body of dog
+        wagMatrix = mat4(1.0); // identity matrix
+    } else {
+
+        // Coordinates of our centroid (which gets translated to orgin)
+        // cx = 0
+        float cy = 0.2919880959497081;
+        float cz = 0.08370484856832476;
+
+        mat4 translationMatrix1 = mat4(1.0, 0.0, 0.0, 0.0,
+                                    0.0, 1.0, 0.0, 0.0,
+                                    0.0, 0.0, 1.0, 0.0,
+                                    0.0, -cy, -cz, 1.0);
+
+        mat4 translationMatrix2 = mat4(1.0, 0.0, 0.0, 0.0,
+                                    0.0, 1.0, 0.0, 0.0,
+                                    0.0, 0.0, 1.0, 0.0,
+                                    0.0, cy, cz, 1.0);
+
+        // these represent our axis with a normalized vector
+        // x = 0
+        float y = -0.5685538673156106;
+        float z = 0.8226460356438018;
+        
+        float k = 1.1; // proportionality constant, determines how much wag angle depends on distance from butt
+        float wagAngle = bigWagAngle * k * vPosition[3]; // still need to connect this to the .js, and make it different for every point proportional to distance from butt
+
+        float c = cos(wagAngle);
+        float omc = 1.0 - c;
+        float s = sin(wagAngle);
+
+        mat4 wagRotationMatrix = mat4(c, -z*s, y*s, 0.0,
+                                z*s, y*y*omc + c, y*z*omc, 0.0,
+                                -y*s, y*z*omc, z*z*omc + c, 0.0,
+                                0.0, 0.0, 0.0, 1.0);
+        
+        wagMatrix = translationMatrix2 * wagRotationMatrix * translationMatrix1;
+        
+    }
+
+    fColor = vColor;
+    gl_Position = rotationMatrix * wagMatrix * vPosition2;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec4 fColor;
+
+void
+main()
+{
+    gl_FragColor = fColor;
+}
+</script>
+
+<script type="text/javascript" src="./lib/webgl-utils.js"></script>
+<script type="text/javascript" src="./lib/initShaders.js"></script>
+<script type="text/javascript" src="./lib/MV.js"></script>
+<script type="text/javascript" src="dog.js"></script>
+<script type="text/javascript" src="colors.js"></script>
+<script type="text/javascript" src="./object_points/dog_triangles_separated.js"></script>
+
+<body>
+<div style = "text-align:center;">
+<canvas id="gl-canvas" width="800"" height="800">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+</div>
+
+<br/>
+
+</body>
+</html>
