@@ -5,4 +5,5 @@
 Click and drag to rotate the dog around
 
 ### Todo
-Make sure the tail wags at the same rate on all browsers/machines by updating the wag angle based on current time
+Add perspective/lighting
+Add textures... fur? grass or other objects besides dog?

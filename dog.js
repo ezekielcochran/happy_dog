@@ -5,7 +5,7 @@
 // Assignment: Enhanced Render
 // Description: Main .js file used for rendering dog
 
-// One quirkly little bug... if you click on the canvas and release the mouse off of it, when the cursor re-enters the canvas, the program still thinks you are dragging
+// One quirkly little feature... if you click on the canvas and release the mouse off of it, when the cursor re-enters the canvas, the program still thinks you are dragging
 
 "use strict";
 
@@ -29,7 +29,10 @@ var bigWagAngle;
 var bigWagAngleLoc;
 var BIG_WAG_ANGLE_MAX = 2.0;
 var wagTime = 0;
-var dWagTime = 0.15;
+var dWagTime = 8;
+var currentDate = new Date()
+var previousTime = currentDate.getTime();
+var currentTime;
 
 window.onload = function init()
 {
@@ -201,8 +204,11 @@ function render()
     rotationMatrix = mult(elevationRotation, azimuthalRotation)
     gl.uniformMatrix4fv(rotationMatrixLoc, false, flatten(rotationMatrix));
 
+    // Makes the wag speed constant, not dependant on how often the animation function is called
+    currentTime = Date.now();
+    wagTime += (currentTime - previousTime) * dWagTime / 1000;
+    previousTime = currentTime;
     // Simple sin function to control the motion of the tail
-    wagTime += dWagTime;
     while (wagTime > 2 * Math.PI) {
         wagTime -= 2 * Math.PI;
     }
