@@ -14,7 +14,7 @@ function tc() {
 }
 
 function randomColor() {
-    return [Math.random(), Math.random() * 3 / 4, 0.8, 1];
+    return [Math.random(), Math.random() * 3 / 4, 0.8, 1.0];
 }
 
 function randomGoldColor() {
