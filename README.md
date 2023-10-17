@@ -1,5 +1,5 @@
 # Happy Dog
-_A low poly dog with a wagging tail (originally for a graphics assignmnt)_
+### A low poly dog with a wagging tail (originally for a graphics assignmnt)
 
 ![Image](example.png)
 

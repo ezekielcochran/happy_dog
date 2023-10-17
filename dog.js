@@ -12,11 +12,10 @@
 var canvas;
 var gl;
 
-// Vertex information stored in object_points/dog_triangles.js
+// "numPonts", "vertices", and "connectionVertices" variables are defined in ./object_points/dog_triangles.js
 
 var points = [];
 var colors = [];
-var texCoords = [];
 
 var azimuthal = -135;
 var elevation = 90;
@@ -34,30 +33,6 @@ var dWagTime = 8;
 var currentDate = new Date()
 var previousTime = currentDate.getTime();
 var currentTime;
-
-var texSize = 64;
-var texCoord = [
-    vec2(0, 0),
-    vec2(0, 1),
-    vec2(1, 1),
-    vec2(1, 0)
-]
-
-var image1 = new Array()
-    for (var i =0; i<texSize; i++)  image1[i] = new Array();
-    for (var i =0; i<texSize; i++) 
-        for ( var j = 0; j < texSize; j++) 
-           image1[i][j] = new Float32Array(4);
-    for (var i =0; i<texSize; i++) for (var j=0; j<texSize; j++) {
-        var c = (((i & 0x8) == 0) ^ ((j & 0x8)  == 0));
-        image1[i][j] = [c, c, c, 1];
-    }
-
-var image2 = new Uint8Array(4*texSize*texSize);
-    for ( var i = 0; i < texSize; i++ ) 
-        for ( var j = 0; j < texSize; j++ ) 
-           for(var k =0; k<4; k++) 
-                image2[4*texSize*i+4*j+k] = 255*image1[i][j][k];
 
 window.onload = function init()
 {
@@ -82,6 +57,7 @@ window.onload = function init()
     var cBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW );
+
     var vColor = gl.getAttribLocation( program, "vColor" );
     gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vColor );
@@ -89,18 +65,11 @@ window.onload = function init()
     var vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
+
+
     var vPosition = gl.getAttribLocation( program, "vPosition" );
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
-
-    var tBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer);
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(texCoords), gl.STATIC_DRAW);
-    var vTexCoord = gl.getAttribLocation( program, "vTexCoord");
-    gl.vertexAttribPointer(vTexCoord, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(vTexCoord);
-    
-    configureTexture(image2);
 
     rotationMatrixLoc = gl.getUniformLocation(program, "rotationMatrix");
     bigWagAngleLoc = gl.getUniformLocation(program, "bigWagAngle");
@@ -118,65 +87,6 @@ window.onload = function init()
     render();
 }
 
-function configureTexture(image) {
-    var texture = gl.createTexture();
-    gl.activeTexture( gl.TEXTURE0 );
-    gl.bindTexture( gl.TEXTURE_2D, texture );
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texSize, texSize, 0, 
-        gl.RGBA, gl.UNSIGNED_BYTE, image);
-    gl.generateMipmap( gl.TEXTURE_2D );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, 
-        gl.NEAREST_MIPMAP_LINEAR );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
-}
-
-// takes 2 vec4 variables, returns float
-function euclidianDistance(point1, point2) {
-    var dx = point1[0] - point2[0];
-    var dy = point1[1] - point2[1];
-    var dz = point1[2] - point2[2];
-    return Math.sqrt(dx*dx + dy*dy + dz*dz);
-}
-
-// helper function for pickTextureCoords
-function coordsFromSides(ab, bc, ac) {
-    var p = (ac*ac - bc*bc + ab*ab) / (2 * ab);
-    var q = Math.sqrt(ac*ac - p*p);
-    // var q = 0.1
-    return vec2(p / ab, q / ab);
-}
-
-// takes in a triangle described by vec4 coordinates a, b, c and returns texture coordinates in respective order
-// so that the longest triangle side is mapped to the segment from (0, 0) to (1, 0) and the third coordinate
-// is picked so that there is no image warping
-// takes an array of vec4 variables, and returns an array of vec2 variables.
-function pickTextureCoords(triangle) {
-    var ab = euclidianDistance(triangle[0], triangle[1]);
-    var bc = euclidianDistance(triangle[1], triangle[2]);
-    var ac = euclidianDistance(triangle[0], triangle[2]);
-    var max = Math.max(ab, bc, ac);
-    var result = Array()
-
-    if (max == ab) {
-        result[0] = vec2(0, 0);
-        result[1] = vec2(1, 0);
-        // result[2] = coordsFromSides(bc, ac, ab);
-        result[2] = coordsFromSides(ab, bc, ac);
-    } else if (max == bc) {
-        // result[0] = coordsFromSides(ac, ab, bc);
-        result[0] = coordsFromSides(bc, ac, ab);
-        result[1] = vec2(0, 0);
-        result[2] = vec2(1, 0);
-    } else if (max == ac) {
-        result[2] = vec2(0, 0);
-        result[0] = vec2(1, 0);
-        // result[2] = coordsFromSides(ab, bc, ac);
-        result[1] = coordsFromSides(ac, ab, bc);
-    }
-
-    return result;
-}
 
 function dog()
 {
@@ -205,20 +115,6 @@ function dog()
         if (i % 3 == 2) {
             triangleColor = randomGoldColor();
         }
-    }
-
-    // we use a separate loop to push the texture values so that we can consdier a triangle at a time
-    for (var i = 0; i < dogVertices.length; i += 3) {
-        var tempCoords = pickTextureCoords(Array(dogVertices[i], dogVertices[i + 1], dogVertices[i + 2]))
-        texCoords.push(tempCoords[0]);
-        texCoords.push(tempCoords[1]);
-        texCoords.push(tempCoords[2]);
-    }
-    for (var i = 0; i < tailVertices.length; i += 3) {
-        var tempCoords = pickTextureCoords(Array(tailVertices[i], tailVertices[i + 1], tailVertices[i + 2]))
-        texCoords.push(tempCoords[0]);
-        texCoords.push(tempCoords[1]);
-        texCoords.push(tempCoords[2]);
     }
 }
 
