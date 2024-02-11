@@ -5,6 +5,7 @@
 
 ### Controls
 Click and drag to rotate the dog around
+[Try it out!](https://ezekielcochran.github.io/happy_dog/dog.html)
 
 ### Todo
 - Add perspective/lighting
