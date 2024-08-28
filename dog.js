@@ -75,13 +75,27 @@ window.onload = function init()
     bigWagAngleLoc = gl.getUniformLocation(program, "bigWagAngle");
 
     canvas.onmousedown = function(event) {
-        click(event);
+        click(event, 0);
     };
     canvas.onmousemove = function(event) {
-        drag(event);
+        drag(event, 0);
     };
     canvas.onmouseup = function(event) {
         release(event);
+    };
+
+    canvas.ontouchstart = function(event) {
+        click(event, 1);
+        // prevents default touch behavior (scrolling, zooming, etc.)
+        event.preventDefault();
+    };
+    canvas.ontouchmove = function(event) {
+        drag(event, 1);
+        event.preventDefault();
+    };
+    canvas.ontouchend = function(event) {
+        release(event);
+        event.preventDefault();
     };
 
     render();
@@ -133,14 +147,32 @@ function getMousePos(event) {
         y: event.clientY - rect.top
     }
 }
-
-function click(event) {
-    mouseDrag = getMousePos(event);
+function getTouchPos(event) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: event.touches[0].clientX - rect.left,
+        y: event.touches[0].clientY - rect.top
+    }
 }
 
-function drag(event) {
+// type 0 is mouse, type 1 is touch
+function click(event, type) {
+    if (type == 0) {
+        mouseDrag = getMousePos(event);
+    } else {
+        mouseDrag = getTouchPos(event);
+    }
+}
+
+// type 0 is mouse, type 1 is touch
+function drag(event, type) {
     if (mouseDrag) {
-        var mousePos = getMousePos(event);
+        var mousePos;
+        if (type == 0) {
+            mousePos = getMousePos(event);
+        } else {
+            mousePos = getTouchPos(event);
+        }
         var dx = mousePos.x - mouseDrag.x;
         var dy = mousePos.y - mouseDrag.y;
         updateDogAngle(dx, dy);
